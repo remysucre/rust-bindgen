@@ -26,8 +26,16 @@ fn rustfmt(source: String) -> (String, String) {
     static CHECK_RUSTFMT: Once = Once::new();
 
     CHECK_RUSTFMT.call_once(|| {
-        let have_working_rustfmt = process::Command::new("rustup")
-            .args(&["run", "nightly", "rustfmt", "--version"])
+        let mut rustfmt = match env::var_os("RUSTFMT") {
+            Some(rustfmt) => process::Command::new(rustfmt),
+            None => {
+                let mut p = process::Command::new("rustup");
+                p.args(&["run", "nightly", "rustfmt", "--version"]);
+                p
+            },
+        };
+
+        let have_working_rustfmt = rustfmt
             .stdout(process::Stdio::null())
             .stderr(process::Stdio::null())
             .status()
